@@ -1,69 +1,143 @@
-## :star2: About the Project
-MyShop is an Ecommerce web application built with Next.js and MongoDB.
+# Next.js Monitoring System with Prometheus, Grafana, and MongoDB Cluster
 
-## <a href="https://my-shop-ecommerce-website-gfpenuezh-pawanpk87.vercel.app/" target="_blank">LIVE DEMO 💥</a>
+## 📖 Overview
 
-<!-- Screenshots -->
+This project sets up a full monitoring stack for a **Next.js** application by integrating:
+- **Prometheus** for collecting application and server metrics.
+- **Grafana** for visualizing metrics and setting up alerting.
+- **MongoDB Cluster** for storing application data with high availability.
 
-### :camera: Screenshots
+The goal is to monitor application performance (response times, throughput, error rates) and ensure database reliability at scale.
 
-![Screenshot (79)](https://user-images.githubusercontent.com/87040096/219966144-f29fe874-400c-44bd-8708-0026616c8c09.png)
+---
 
-##
-![Screenshot (82)](https://user-images.githubusercontent.com/87040096/219966155-35a608b3-0c48-447b-b86d-2f8c21e153cc.png)
+## 🛠 Tech Stack
 
-##
-![Screenshot (89)](https://user-images.githubusercontent.com/87040096/219966164-ec2ee88d-fce1-4004-a8bd-fb655523b8db.png)
+- **Next.js** — Frontend and Server-Side Rendering Application
+- **Prometheus** — Time Series Metrics Collection
+- **Grafana** — Data Visualization and Monitoring Dashboards
+- **MongoDB Cluster** — Distributed Database System
+- **Node.js** — Backend APIs
+- **Docker Compose** — Container Orchestration (optional)
 
-##
-![Screenshot (90)](https://user-images.githubusercontent.com/87040096/219966172-ca106a05-4eee-4a73-813a-90b7ac8de21c.png)
+---
 
-### :space_invader: Tech Stack
+## 📦 Project Structure
 
-<details>
-  <summary>Client</summary>
-  <ul>
-    <li><a href="https://nextjs.org/">Next.js</a></li>
-    <li><a href="https://tailwindcss.com/">TailwindCSS</a></li>
-  </ul>
-</details>
+```
+/nextjs-app          # Next.js application code
+/prometheus/         # Prometheus configuration (prometheus.yml)
+/grafana/            # Grafana provisioning dashboards and data sources
+/docker-compose.yml  # (Optional) Docker setup for services
+README.md
+```
 
-<details>
-<summary>Database</summary>
-  <ul>
-    <li><a href="https://www.mongodb.com/">MongoDB</a></li>
-  </ul>
-</details>
-<br />
+---
 
-<table>
-    <tr>
-        <td>
-<a href="#"><img src="https://user-images.githubusercontent.com/87040096/219964861-dfbad18b-7218-4347-9b8e-f233e1f23e55.png" alt="" width="30" height="30" /></a>
-        </td>
-        <td>
-<a href="#"><img src="https://user-images.githubusercontent.com/87040096/219965241-cbf7d1cb-272a-4e32-b085-6104d64fded5.png" alt="" width="30" height="30" /></a>
-        </td>
-        <td>
-<a href="#"><img src="https://user-images.githubusercontent.com/87040096/219964658-1e8a6ccf-ea9c-4253-b826-b095d0e3f947.png" alt="" width="30" height="30" /></a>
-        </td>
-        <td>
-<a href="#"><img src="https://user-images.githubusercontent.com/87040096/219965413-c12fd00c-0139-4ea7-82bf-ee417530a1aa.png" alt="" width="30" height="30" /></a>
-        </td>
-    </tr>
-</table>
+## ⚙️ Setup Instructions
 
-# 🏃‍♀️ Running
+### 1. Clone the Repository
+```bash
+git clone  https://github.com/xina99999/monitor-nextjs-mongodb-grafa-prometheus.git
+cd nextjs-monitoring
+```
 
--   Clone repo Run `git clone https://github.com/pawanpk87/myShop-Ecommerce-website.git`
--   Run `npm i`
--   Run `npm run dev`
--   See `http://localhost:3000`
+### 2. Start MongoDB Cluster
+Set up a **MongoDB Atlas** cluster or a **self-hosted replica set**.
+> Update your database URI in your Next.js environment:
+```env
+MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/dbname
+```
 
+### 3. Configure Prometheus
+Edit `prometheus/prometheus.yml`:
+```yaml
+scrape_configs:
+  - job_name: 'nextjs-app'
+    static_configs:
+      - targets: ['nextjs-app:3000']
+```
 
-<!-- CONTACT -->
-## Contact
+### 4. Start Prometheus & Grafana
+You can use Docker Compose to start everything:
+```bash
+docker-compose up -d
+```
 
-Pawan Kumar Mehta - arowpk@gmail.com
+Or start each service manually:
+```bash
+docker run -p 9090:9090 prom/prometheus --config.file=/path/to/prometheus.yml
+docker run -p 4000:3000 grafana/grafana
+```
 
-Project Link: [https://github.com/pawanpk87/myShop-Ecommerce-website](https://github.com/pawanpk87/myShop-Ecommerce-website)
+Grafana default login:
+- **Username:** admin
+- **Password:** secret
+
+Connect Grafana to Prometheus (http://localhost:9090) as a data source.
+
+### 5. Expose Next.js Metrics
+In your Next.js app, you can expose a `/metrics` endpoint:
+```javascript
+import client from 'prom-client';
+
+const collectDefaultMetrics = client.collectDefaultMetrics;
+collectDefaultMetrics();
+
+export default async function handler(req, res) {
+  res.setHeader('Content-Type', client.register.contentType);
+  res.end(await client.register.metrics());
+}
+```
+
+Add it to `/pages/api/metrics.js` route.
+
+---
+
+## 📊 Dashboards and Metrics
+
+- **API Response Time**
+- **Request Rate**
+- **Error Rate**
+- **Database Connection Health**
+- **Custom Business Metrics**
+
+You can import ready-to-use dashboards into Grafana from JSON files located inside `/grafana/dashboards`.
+
+---
+
+## 🚨 Alerting
+
+Set up alert rules in Prometheus or Grafana:
+- High response times
+- Too many errors (5xx rate > threshold)
+- MongoDB connection issues
+
+Alerts can be integrated with:
+- Slack
+- Email
+- PagerDuty
+- Webhooks
+
+---
+
+## 📈 Future Improvements
+
+- Load Balancer Metrics
+- MongoDB Advanced Metrics (using `mongodb_exporter`)
+- Auto-scaling Grafana and Prometheus
+- Deploy on Kubernetes Cluster
+
+---
+
+## 👋 License
+
+This project is licensed under the [MIT License](LICENSE).
+
+---
+
+## 👌 Contribution
+
+Feel free to submit issues, fork the repo, and send PRs!  
+Let's build a more resilient monitoring system together 🚀
+

@@ -39,7 +39,8 @@ README.md
 ### 1. Clone the Repository
 ```bash
 git clone  https://github.com/xina99999/monitor-nextjs-mongodb-grafa-prometheus.git
-cd nextjs-monitoring
+cd monitor-nextjs-mongodb-grafa-prometheus
+docker compose up --buils
 ```
 
 ### 2. Start MongoDB Cluster
@@ -55,7 +56,7 @@ Edit `prometheus/prometheus.yml`:
 scrape_configs:
   - job_name: 'nextjs-app'
     static_configs:
-      - targets: ['nextjs-app:3000']
+      - targets: ['myshop-ecommerce-website-web-1:3000']
 ```
 
 ### 4. Start Prometheus & Grafana

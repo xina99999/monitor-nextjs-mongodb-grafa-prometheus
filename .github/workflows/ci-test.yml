@@ -1,0 +1,30 @@
+name: CI - Test Environment (Docker Build)
+
+on:
+  push:
+    branches: ["dev"]
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+
+    env:
+      MONGODB_URL: ${{ secrets.MONGODB_URL_TEST }}
+      NEXTAUTH_URL: ${{ secrets.NEXTAUTH_URL_TEST }}
+      NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET_TEST }}
+      NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME: ${{ secrets.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME_TEST }}
+      NEXT_PUBLIC_CLOUDINARY_API_KEY: ${{ secrets.NEXT_PUBLIC_CLOUDINARY_API_KEY_TEST }}
+      CLOUDINARY_SECRET: ${{ secrets.CLOUDINARY_SECRET_TEST }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build Docker image for test
+        run: docker build -t nhan-monitor:test .
+
+      - name: Run Docker Compose (test)
+        run: docker compose -f docker-compose.yml up -d --build
+
+      - name: Verify containers running
+        run: docker ps

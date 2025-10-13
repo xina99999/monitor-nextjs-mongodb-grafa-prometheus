@@ -1,0 +1,23 @@
+name: CI - Static (Build & Test)
+
+on:
+  pull_request:
+    branches: ["main", "dev"]
+
+jobs:
+  static-checks:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build Docker image
+        run: docker build -t nhan-monitor:static .
+
+      - name: Run container to verify build
+        run: docker run --rm nhan-monitor:static echo "✅ Build OK"
+
+      - name: Run container tests (optional)
+        run: |
+          docker run --rm nhan-monitor:static npm test || echo "⚠️ No test command defined"

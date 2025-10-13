@@ -8,23 +8,28 @@ jobs:
   build-prod:
     runs-on: ubuntu-latest
 
-    env:
-      MONGODB_URL: ${{ secrets.MONGODB_URL_PROD }}
-      NEXTAUTH_URL: ${{ secrets.NEXTAUTH_URL_PROD }}
-      NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET_PROD }}
-      NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME: ${{ secrets.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME_PROD }}
-      NEXT_PUBLIC_CLOUDINARY_API_KEY: ${{ secrets.NEXT_PUBLIC_CLOUDINARY_API_KEY_PROD }}
-      CLOUDINARY_SECRET: ${{ secrets.CLOUDINARY_SECRET_PROD }}
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      #
+      - name: Create .env file from secrets
+        run: |
+          echo "MONGODB_URL=${{ secrets.MONGODB_URL_PROD }}" >> .env
+          echo "NEXTAUTH_URL=${{ secrets.NEXTAUTH_URL_PROD }}" >> .env
+          echo "NEXTAUTH_SECRET=${{ secrets.NEXTAUTH_SECRET_PROD }}" >> .env
+          echo "NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME=${{ secrets.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME_PROD }}" >> .env
+          echo "NEXT_PUBLIC_CLOUDINARY_API_KEY=${{ secrets.NEXT_PUBLIC_CLOUDINARY_API_KEY_PROD }}" >> .env
+          echo "CLOUDINARY_SECRET=${{ secrets.CLOUDINARY_SECRET_PROD }}" >> .env
+
+      # 
       - name: Build Docker image for production
         run: docker build -t nhan-monitor:prod .
 
+      # 
       - name: Run Docker Compose (production)
         run: docker compose -f docker-compose.yml up -d --build
 
-      - name: Verify containers
+      # 
+      - name: Verify running containers
         run: docker ps

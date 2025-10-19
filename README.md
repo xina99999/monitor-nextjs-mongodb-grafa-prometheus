@@ -140,5 +140,5 @@ This project is licensed under the [MIT License](LICENSE).
 ## 👌 Contribution
 
 Feel free to submit issues, fork the repo, and send PRs!  
-Let's build a more resilient monitoring system together 🚀
+Let's build a more resilient monitoring system together 🚀.
 

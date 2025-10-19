@@ -1,18 +1,23 @@
-name: CI - Production (Docker Build)
+name: CI - Production (Docker Build & Deploy to AWS)
 
 on:
   push:
     branches: ["main"]
 
 jobs:
-  build-prod:
+  build-and-deploy:
     runs-on: ubuntu-latest
 
+    env:
+      IMAGE_NAME: nhan-monitor
+      CONTAINER_NAME: nhan-monitor-prod
+
     steps:
+      # 🧩 1. Lấy code
       - name: Checkout code
         uses: actions/checkout@v4
 
-      #
+      # 🧩 2. Tạo file .env từ GitHub Secrets
       - name: Create .env file from secrets
         run: |
           echo "MONGODB_URL=${{ secrets.MONGODB_URL_PROD }}" >> .env
@@ -22,14 +27,37 @@ jobs:
           echo "NEXT_PUBLIC_CLOUDINARY_API_KEY=${{ secrets.NEXT_PUBLIC_CLOUDINARY_API_KEY_PROD }}" >> .env
           echo "CLOUDINARY_SECRET=${{ secrets.CLOUDINARY_SECRET_PROD }}" >> .env
 
-      # 
-      - name: Build Docker image for production
-        run: docker build -t nhan-monitor:prod .
+      # 🧩 3. Login Docker Hub
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      # 
-      - name: Run Docker Compose (production)
-        run: docker compose -f docker-compose.yml up -d --build
+      # 🧩 4. Build Docker image
+      - name: Build Docker image
+        run: docker build -t $IMAGE_NAME:prod .
 
-      # 
-      - name: Verify running containers
-        run: docker ps
+      # 🧩 5. Push image lên Docker Hub
+      - name: Push image to Docker Hub
+        run: |
+          docker tag $IMAGE_NAME:prod ${{ secrets.DOCKERHUB_USERNAME }}/$IMAGE_NAME:prod
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/$IMAGE_NAME:prod
+
+      # 🧩 6. Deploy lên AWS EC2 qua SSH key
+      - name: Deploy to AWS EC2 via SSH
+        uses: appleboy/ssh-action@v0.1.10
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            echo "🔄 Pulling latest image from Docker Hub..."
+            docker pull ${{ secrets.DOCKERHUB_USERNAME }}/$IMAGE_NAME:prod
+
+            echo "🧹 Removing old containers..."
+            docker compose -f /home/ubuntu/app/docker-compose.yml down || true
+
+            echo "🚀 Starting new containers..."
+            cd /home/ubuntu/app
+            docker compose -f docker-compose.yml up -d --build
